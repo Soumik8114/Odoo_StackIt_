@@ -9,6 +9,26 @@ from datetime import timezone
 def load_user(user_id):
     return user.query.get(int(user_id))
 
+class ReplyVote(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    reply_id = db.Column(db.Integer, db.ForeignKey('reply.id'), nullable=False)
+    vote_type = db.Column(db.String(10), nullable=False)  # 'upvote' or 'downvote'
+    __table_args__ = (db.UniqueConstraint('user_id', 'reply_id', name='unique_user_reply_vote'),)
+class Reply(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    content = db.Column(db.Text, nullable=False)
+    date_posted = db.Column(db.DateTime, nullable=False, default=datetime.datetime.utcnow)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    post_id = db.Column(db.Integer, db.ForeignKey('post.id'), nullable=False)
+    upvotes = db.Column(db.Integer, default=0)
+    downvotes = db.Column(db.Integer, default=0)
+    user = db.relationship('user', backref='replies', lazy=True)
+    post = db.relationship('post', backref='replies', lazy=True)
+    
+def __repr__(self):
+        return f"Reply('{self.content[:20]}', '{self.date_posted}')"
+
 class PostVote(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)

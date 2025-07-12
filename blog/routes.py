@@ -1,5 +1,9 @@
 from flask import render_template,url_for,flash,redirect,request,abort
-from blog.models import user,post
+from blog.models import user,post,Reply,ReplyVote
+from blog.forms import (RegistrationForm,LoginForm,UpdateAccountForm,
+                        PostForm,RequestResetForm,ResetPasswordForm)
+# Reply to a post
+
 from blog import app,db,bcrypt,mail
 from blog.forms import (RegistrationForm,LoginForm,UpdateAccountForm,
                         PostForm,RequestResetForm,ResetPasswordForm)
@@ -11,6 +15,58 @@ from flask_mail import Message
 
 # Voting routes
 from blog.models import PostVote
+
+@app.route('/post/<int:post_id>/reply', methods=['POST'])
+@login_required
+def reply_post(post_id):
+    pst = post.query.get_or_404(post_id)
+    content = request.form.get('reply_content')
+    if not content:
+        flash('Reply cannot be empty.', 'warning')
+        return redirect(request.referrer or url_for('post_show', post_id=post_id))
+    reply = Reply(content=content, user_id=current_user.id, post_id=post_id)
+    db.session.add(reply)
+    db.session.commit()
+    flash('Reply added!', 'success')
+    return redirect(url_for('post_show', post_id=post_id))
+
+# Upvote a reply
+@app.route('/reply/<int:reply_id>/upvote', methods=['POST'])
+@login_required
+def upvote_reply(reply_id):
+    reply = Reply.query.get_or_404(reply_id)
+    if reply.user_id == current_user.id:
+        flash('You cannot vote on your own reply.', 'warning')
+        return redirect(request.referrer or url_for('post_show', post_id=reply.post_id))
+    existing_vote = ReplyVote.query.filter_by(user_id=current_user.id, reply_id=reply_id).first()
+    if existing_vote:
+        flash('You have already voted on this reply.', 'warning')
+        return redirect(request.referrer or url_for('post_show', post_id=reply.post_id))
+    vote = ReplyVote(user_id=current_user.id, reply_id=reply_id, vote_type='upvote')
+    reply.upvotes = (reply.upvotes or 0) + 1
+    db.session.add(vote)
+    db.session.commit()
+    flash('You upvoted the reply!', 'success')
+    return redirect(request.referrer or url_for('post_show', post_id=reply.post_id))
+
+# Downvote a reply
+@app.route('/reply/<int:reply_id>/downvote', methods=['POST'])
+@login_required
+def downvote_reply(reply_id):
+    reply = Reply.query.get_or_404(reply_id)
+    if reply.user_id == current_user.id:
+        flash('You cannot vote on your own reply.', 'warning')
+        return redirect(request.referrer or url_for('post_show', post_id=reply.post_id))
+    existing_vote = ReplyVote.query.filter_by(user_id=current_user.id, reply_id=reply_id).first()
+    if existing_vote:
+        flash('You have already voted on this reply.', 'warning')
+        return redirect(request.referrer or url_for('post_show', post_id=reply.post_id))
+    vote = ReplyVote(user_id=current_user.id, reply_id=reply_id, vote_type='downvote')
+    reply.downvotes = (reply.downvotes or 0) + 1
+    db.session.add(vote)
+    db.session.commit()
+    flash('You downvoted the reply!', 'info')
+    return redirect(request.referrer or url_for('post_show', post_id=reply.post_id))
 
 @app.route('/post/<int:post_id>/upvote', methods=['POST'])
 @login_required
