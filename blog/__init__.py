@@ -14,6 +14,13 @@ bcrypt=Bcrypt()
 login_manager=LoginManager(app)
 login_manager.login_view='login'
 login_manager.login_message_category='info'
+
+# Session cookie security settings
+app.config['SESSION_COOKIE_HTTPONLY'] = True
+app.config['REMEMBER_COOKIE_HTTPONLY'] = True
+app.config['SESSION_COOKIE_SECURE'] = True
+app.config['REMEMBER_COOKIE_SECURE'] = True
+
 app.config['MAIL_SERVER']='smtp.gmail.com'
 app.config['MAIL_USERNAME']='mailsblog57@gmail.com'
 app.config['MAIL_PASSWORD']=''
