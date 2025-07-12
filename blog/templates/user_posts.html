@@ -11,6 +11,16 @@
             </div>
             <h2><a class="article-title" href="{{ url_for('post_show', post_id=post.id) }}">{{ post.title }}</a></h2>
             <p class="article-content">{{ post.content }}</p>
+            <div class="vote-section mt-2">
+                <form action="{{ url_for('upvote_post', post_id=post.id) }}" method="post" style="display:inline;">
+                    <button type="submit" class="btn btn-success btn-sm">&#8679; Upvote</button>
+                </form>
+                <span class="mx-2">{{ post.upvotes or 0 }}</span>
+                <form action="{{ url_for('downvote_post', post_id=post.id) }}" method="post" style="display:inline;">
+                    <button type="submit" class="btn btn-danger btn-sm">&#8681; Downvote</button>
+                </form>
+                <span class="mx-2">{{ post.downvotes or 0 }}</span>
+            </div>
             </div>
         </article>
     {% endfor %}

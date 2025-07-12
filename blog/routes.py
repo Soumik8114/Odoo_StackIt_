@@ -9,6 +9,45 @@ import os
 from PIL import Image
 from flask_mail import Message
 
+# Voting routes
+from blog.models import PostVote
+
+@app.route('/post/<int:post_id>/upvote', methods=['POST'])
+@login_required
+def upvote_post(post_id):
+    pst = post.query.get_or_404(post_id)
+    if pst.author.id == current_user.id:
+        flash('You cannot vote on your own post.', 'warning')
+        return redirect(request.referrer or url_for('home'))
+    existing_vote = PostVote.query.filter_by(user_id=current_user.id, post_id=post_id).first()
+    if existing_vote:
+        flash('You have already voted on this post.', 'warning')
+        return redirect(request.referrer or url_for('home'))
+    vote = PostVote(user_id=current_user.id, post_id=post_id, vote_type='upvote')
+    pst.upvotes = (pst.upvotes or 0) + 1
+    db.session.add(vote)
+    db.session.commit()
+    flash('You upvoted the post!', 'success')
+    return redirect(request.referrer or url_for('home'))
+
+@app.route('/post/<int:post_id>/downvote', methods=['POST'])
+@login_required
+def downvote_post(post_id):
+    pst = post.query.get_or_404(post_id)
+    if pst.author.id == current_user.id:
+        flash('You cannot vote on your own post.', 'warning')
+        return redirect(request.referrer or url_for('home'))
+    existing_vote = PostVote.query.filter_by(user_id=current_user.id, post_id=post_id).first()
+    if existing_vote:
+        flash('You have already voted on this post.', 'warning')
+        return redirect(request.referrer or url_for('home'))
+    vote = PostVote(user_id=current_user.id, post_id=post_id, vote_type='downvote')
+    pst.downvotes = (pst.downvotes or 0) + 1
+    db.session.add(vote)
+    db.session.commit()
+    flash('You downvoted the post!', 'info')
+    return redirect(request.referrer or url_for('home'))
+
 @app.route("/")
 @app.route("/home")
 def home():

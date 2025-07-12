@@ -9,6 +9,13 @@ from datetime import timezone
 def load_user(user_id):
     return user.query.get(int(user_id))
 
+class PostVote(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    post_id = db.Column(db.Integer, db.ForeignKey('post.id'), nullable=False)
+    vote_type = db.Column(db.String(10), nullable=False)  # 'upvote' or 'downvote'
+    __table_args__ = (db.UniqueConstraint('user_id', 'post_id', name='unique_user_post_vote'),)
+
 class user(db.Model,UserMixin):
     id=db.Column(db.Integer,primary_key=True)
     username=db.Column(db.String(20),unique=True,nullable=False)
@@ -43,6 +50,8 @@ class post(db.Model):
     date_posted=db.Column(db.DateTime,nullable=False,default=datetime.datetime.utcnow)
     content=db.Column(db.Text,nullable=False)
     user_id=db.Column(db.Integer,db.ForeignKey('user.id'),nullable=False)
+    upvotes = db.Column(db.Integer, default=0)
+    downvotes = db.Column(db.Integer, default=0)
 
     def __repr__(self):
         return f"Post('{self.title}','{self.date_posted}')"
